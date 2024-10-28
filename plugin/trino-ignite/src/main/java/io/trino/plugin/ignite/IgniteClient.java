@@ -37,6 +37,7 @@ import io.trino.plugin.jdbc.LongReadFunction;
 import io.trino.plugin.jdbc.LongWriteFunction;
 import io.trino.plugin.jdbc.PreparedQuery;
 import io.trino.plugin.jdbc.QueryBuilder;
+import io.trino.plugin.jdbc.RemoteTableName;
 import io.trino.plugin.jdbc.WriteFunction;
 import io.trino.plugin.jdbc.WriteMapping;
 import io.trino.plugin.jdbc.aggregation.ImplementAvgFloatingPoint;
@@ -214,6 +215,21 @@ public class IgniteClient
                 schemaName.orElse(null),
                 tableName.orElse(null),
                 new String[] {"TABLE", "VIEW"});
+    }
+
+    @Override
+    protected ResultSet getColumns(JdbcTableHandle tableHandle, DatabaseMetaData metadata)
+            throws SQLException
+    {
+        RemoteTableName remoteTableName = tableHandle.getRequiredNamedRelation().getRemoteTableName();
+        Optional<String> schemaName = Optional.ofNullable(remoteTableName.getSchemaName())
+                .orElse(null);
+        return metadata.getColumns(
+                null,
+                schemaName != null ? String.valueOf(schemaName) : null,
+                Optional.ofNullable(remoteTableName.getTableName())
+                        .orElse(null),
+                null);
     }
 
     @Override
