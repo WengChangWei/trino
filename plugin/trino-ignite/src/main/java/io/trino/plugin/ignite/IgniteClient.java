@@ -212,26 +212,11 @@ public class IgniteClient
         return metadata.getTables(
                 null, // no catalogs in Ignite
                 // TODO: https://github.com/trinodb/trino/issues/8552 support user custom schemas.
-                schemaName.orElse(null),
-                tableName.orElse(null),
+                escapeObjectNameForMetadataQuery(schemaName, metadata.getSearchStringEscape()).orElse(IGNITE_SCHEMA),
+                escapeObjectNameForMetadataQuery(tableName, metadata.getSearchStringEscape()).orElse(null),
                 new String[] {"TABLE", "VIEW"});
     }
-
-    @Override
-    protected ResultSet getColumns(JdbcTableHandle tableHandle, DatabaseMetaData metadata)
-            throws SQLException
-    {
-        RemoteTableName remoteTableName = tableHandle.getRequiredNamedRelation().getRemoteTableName();
-        Optional<String> schemaName = Optional.ofNullable(remoteTableName.getSchemaName())
-                .orElse(null);
-        return metadata.getColumns(
-                null,
-                schemaName != null ? String.valueOf(schemaName) : null,
-                Optional.ofNullable(remoteTableName.getTableName())
-                        .orElse(null),
-                null);
-    }
-
+    
     @Override
     public Optional<ColumnMapping> toColumnMapping(ConnectorSession session, Connection connection, JdbcTypeHandle typeHandle)
     {
