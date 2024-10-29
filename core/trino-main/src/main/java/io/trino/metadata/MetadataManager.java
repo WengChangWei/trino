@@ -1844,6 +1844,7 @@ public final class MetadataManager
     public RedirectionAwareTableHandle getRedirectionAwareTableHandle(Session session, QualifiedObjectName tableName, Optional<TableVersion> startVersion, Optional<TableVersion> endVersion)
     {
         QualifiedObjectName targetTableName = getRedirectedTableName(session, tableName);
+        log.debug("==================MetadataManager.targetTableName={}", targetTableName);
         if (targetTableName.equals(tableName)) {
             return noRedirection(getTableHandle(session, tableName, startVersion, endVersion));
         }
