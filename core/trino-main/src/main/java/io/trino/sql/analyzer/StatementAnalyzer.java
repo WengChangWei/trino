@@ -37,7 +37,6 @@ import io.trino.metadata.AnalyzePropertyManager;
 import io.trino.metadata.FunctionResolver;
 import io.trino.metadata.MaterializedViewDefinition;
 import io.trino.metadata.Metadata;
-import io.trino.metadata.MetadataManager;
 import io.trino.metadata.OperatorNotFoundException;
 import io.trino.metadata.QualifiedObjectName;
 import io.trino.metadata.RedirectionAwareTableHandle;
