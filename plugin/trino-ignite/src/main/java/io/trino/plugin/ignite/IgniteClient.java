@@ -77,7 +77,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -142,7 +144,6 @@ public class IgniteClient
         extends BaseJdbcClient
 {
     private static final String IGNITE_SCHEMA = "PUBLIC";
-
     private static final String IGNITE_DUMMY_ID = "dummy_id";
     private static final Splitter SPLITTER = Splitter.on("\"").omitEmptyStrings().trimResults();
     private static final LocalDate MIN_DATE = LocalDate.parse("1970-01-01");
@@ -214,6 +215,74 @@ public class IgniteClient
                 escapeObjectNameForMetadataQuery(schemaName, metadata.getSearchStringEscape()).orElse(IGNITE_SCHEMA),
                 escapeObjectNameForMetadataQuery(tableName, metadata.getSearchStringEscape()).orElse(null),
                 new String[] {"TABLE", "VIEW"});
+    }
+
+    @Override
+    protected String escapeObjectNameForMetadataQuery(String name, String escape)
+    {
+        requireNonNull(name, "name is null");
+        requireNonNull(escape, "escape is null");
+        checkArgument(!escape.isEmpty(), "Escape string must not be empty");
+        checkArgument(!escape.equals("_"), "Escape string must not be '_'");
+        checkArgument(!escape.equals("%"), "Escape string must not be '%'");
+        // 获取表名有多少组下划线
+        List<Integer> tableNameUnderlineList = getTableNameUnderlineList(name);
+        name = name.replace(escape, escape + escape);
+        name = name.replace("_", escape + "_");
+        name = name.replace("%", escape + "%");
+        // 当表名存在双下划线时,需要再转换一下,否则会查询不到
+        name = tableNameTransform(name, tableNameUnderlineList);
+        return name;
+    }
+
+    private List<Integer> getTableNameUnderlineList(String name)
+    {
+        List<Integer> list = new ArrayList<>();
+
+        // 记录有多少组连在一起的下划线
+        for (int i = 0; i <= name.length() - 3; i++) {
+            int count = 0;
+            while (i < name.length() && name.charAt(i) == '_') {
+                count++;
+                i++;
+            }
+            if (count >= 1) {
+                list.add(count);
+            }
+        }
+
+        // 排序
+        Collections.sort(list, (o1, o2) -> {
+            return o2.compareTo(o1);
+        });
+
+        return list;
+    }
+
+    private String tableNameTransform(String name, List<Integer> list)
+    {
+        /**
+         * 将多个下划线转换
+         * 比如：
+         *  \_\_ 转成 \__
+         *  \_\_\_ 转成 \___
+         */
+        for (Integer i : list) {
+            if (i > 1) {
+                // 拼接成 \__
+                StringBuilder transformAfter = new StringBuilder("\\");
+                for (Integer integer = 0; integer < i; integer++) {
+                    transformAfter.append("_");
+                }
+                // 拼接成 \_\_ 为了方便后续做替换
+                StringBuilder transformBefore = new StringBuilder();
+                for (int j = 0; j < i; j++) {
+                    transformBefore.append("\\_");
+                }
+                name = name.replace(transformBefore, transformAfter);
+            }
+        }
+        return name;
     }
 
     @Override
