@@ -240,7 +240,7 @@ public class IgniteClient
         List<Integer> list = new ArrayList<>();
 
         // 记录有多少组连在一起的下划线
-        for (int i = 0; i <= name.length() - 3; i++) {
+        for (int i = 0; i < name.length(); i++) {
             int count = 0;
             while (i < name.length() && name.charAt(i) == '_') {
                 count++;
