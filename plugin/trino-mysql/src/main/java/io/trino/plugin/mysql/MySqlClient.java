@@ -304,7 +304,7 @@ public class MySqlClient
         if (tableHandle.isSynthetic()) {
             return ImmutableMap.of();
         }
-        PreparedQuery preparedQuery = new PreparedQuery(format("SELECT * FROM %s", quoted(tableHandle.asPlainTable().getRemoteTableName())), ImmutableList.of());
+        PreparedQuery preparedQuery = new PreparedQuery(format("SELECT * FROM %s LIMIT 1", quoted(tableHandle.asPlainTable().getRemoteTableName())), ImmutableList.of());
 
         try (PreparedStatement preparedStatement = queryBuilder.prepareStatement(this, session, connection, preparedQuery, Optional.empty())) {
             ResultSetMetaData metadata = preparedStatement.getMetaData();
